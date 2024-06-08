@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { TodoService } from './todo.service';
 import { CreateTodoDto } from './dto/create-todo.dto';
@@ -21,8 +22,14 @@ export class TodoController {
   }
 
   @Get()
-  findAll() {
-    return this.todoService.findAll();
+  findAll(@Query() query: any) {
+    const { limit, skip, isComplete } = query;
+
+    return this.todoService.findAll(
+      limit || 10,
+      skip || 0,
+      isComplete || false,
+    );
   }
 
   @Get(':id')

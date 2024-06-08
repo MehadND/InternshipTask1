@@ -33,8 +33,18 @@ export class TodoService {
     // return 'This action adds a new todo';
   }
 
-  async findAll(): Promise<Todo[]> {
-    const todos = await this.todoModel.find().exec();
+  async findAll(
+    limit: number,
+    skip: number,
+    isComplete: boolean,
+  ): Promise<Todo[]> {
+    const todos = await this.todoModel
+      .find()
+      .limit(limit)
+      .skip(skip)
+      .where('isComplete')
+      .equals(isComplete)
+      .exec();
 
     if (!todos) {
       throw new NotFoundException('No todos found!');

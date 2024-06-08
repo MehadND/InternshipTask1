@@ -33,17 +33,12 @@ export class TodoService {
     // return 'This action adds a new todo';
   }
 
-  async findAll(
-    limit: number,
-    skip: number,
-    isComplete: boolean,
-  ): Promise<Todo[]> {
+  async findAll(limit: number, skip: number): Promise<Todo[]> {
     const todos = await this.todoModel
       .find()
+      .where('createdAt')
       .limit(limit)
       .skip(skip)
-      .where('isComplete')
-      .equals(isComplete)
       .exec();
 
     if (!todos) {

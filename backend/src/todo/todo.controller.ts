@@ -23,13 +23,9 @@ export class TodoController {
 
   @Get()
   findAll(@Query() query: any) {
-    const { limit, skip, isComplete } = query;
+    const { limit, skip } = query;
 
-    return this.todoService.findAll(
-      limit || 10,
-      skip || 0,
-      isComplete || false,
-    );
+    return this.todoService.findAll(limit || 10, skip || 0);
   }
 
   @Get(':id')

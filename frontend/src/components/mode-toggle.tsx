@@ -8,7 +8,7 @@ export function LightModeToggle() {
 
   return (
     <Button
-      variant={"default"}
+      variant={"ghost"}
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
     >
       <Sun className=" h-[1.2rem] w-[1.2rem] -rotate-90 scale-0 transition-all duration-150 dark:rotate-90 dark:scale-100 " />

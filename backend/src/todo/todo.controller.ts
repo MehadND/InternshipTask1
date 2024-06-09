@@ -11,6 +11,7 @@ import {
 import { TodoService } from './todo.service';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
+import { Todo } from './schemas/todo.schema';
 
 @Controller('todo')
 export class TodoController {
@@ -22,10 +23,13 @@ export class TodoController {
   }
 
   @Get()
-  findAll(@Query() query: any) {
-    const { limit, skip } = query;
-
-    return this.todoService.findAll(limit || 10, skip || 0);
+  async findAll(
+    @Query('limit') limit: number = 5,
+    @Query('page') page: number = 1,
+    @Query('sort') sort: string = 'createdAt',
+    @Query('order') order: string = 'asc',
+  ): Promise<{ data: Todo[]; pagination: any }> {
+    return this.todoService.findAll(limit, page, sort, order);
   }
 
   @Get(':id')

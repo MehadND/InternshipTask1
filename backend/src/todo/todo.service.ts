@@ -33,20 +33,38 @@ export class TodoService {
     // return 'This action adds a new todo';
   }
 
-  async findAll(limit: number, skip: number): Promise<Todo[]> {
-    const todos = await this.todoModel
-      .find()
-      .where('createdAt')
-      .limit(limit)
-      .skip(skip)
-      .exec();
+  async findAll(
+    limit: number,
+    page: number,
+    sort: string,
+    order: string,
+  ): Promise<{ data: Todo[]; pagination: any }> {
+    const sortOrder = order === 'asc' ? 1 : -1;
+    const skip = (page - 1) * limit;
 
-    if (!todos) {
-      throw new NotFoundException('No todos found!');
+    const [total, todos] = await Promise.all([
+      this.todoModel.countDocuments().exec(),
+      this.todoModel
+        .find()
+        .sort({ [sort]: sortOrder })
+        .limit(limit)
+        .skip(skip)
+        .exec(),
+    ]);
+
+    if (!todos || page > Math.ceil(total / limit)) {
+      throw new NotFoundException('Todo Not Found');
     }
 
-    return todos;
-
+    return {
+      data: todos,
+      pagination: {
+        totalItems: total,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        itemsPerPage: limit,
+      },
+    };
     // return `This action returns all todo`;
   }
 

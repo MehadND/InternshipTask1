@@ -48,7 +48,7 @@ export class TodoService {
         .find()
         .sort({ [sort]: sortOrder })
         .limit(limit)
-        .skip(skip)
+        .skip(skip >= 0 ? skip : 0)
         .exec(),
     ]);
 

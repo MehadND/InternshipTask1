@@ -53,8 +53,25 @@ export const addTodo = createAsyncThunk(
         body: JSON.stringify(todoData),
       });
       const data = await response.json();
-      console.log(data);
       return data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const deleteTodo = createAsyncThunk(
+  "todos/deleteTodo",
+  async ({ todoId }: { todoId: Todo }, { rejectWithValue }) => {
+    try {
+      await fetch(`http://localhost:5001/todo/${todoId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          // Authorization: `Bearer ${token}`,
+        },
+      });
+      return todoId; // return the ID of the deleted todo
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
@@ -94,8 +111,17 @@ export const todosSlice = createSlice({
         );
       }
     });
-
     builder.addCase(addTodo.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || "";
+    });
+
+    builder.addCase(deleteTodo.fulfilled, (state, action) => {
+      state.loading = false;
+      state.todos = state.todos.filter((todo) => todo.id !== action.payload);
+      state.error = "";
+    });
+    builder.addCase(deleteTodo.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message || "";
     });

@@ -1,12 +1,6 @@
+import { Todo } from "@/interfaces/todo";
+import { RootState } from "@/redux/store";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-
-interface Todo {
-  id?: string;
-  taskTitle: string;
-  taskDescription?: string;
-  isComplete?: boolean;
-  createdAt?: Date;
-}
 
 interface PaginationData {
   totalItems: number;
@@ -42,38 +36,118 @@ export const fetchTodos = createAsyncThunk(
 
 export const addTodo = createAsyncThunk(
   "todos/addTodo",
-  async ({ todoData }: { todoData: Todo }, { rejectWithValue }) => {
+  async ({ todoData }: { todoData: Todo }, { getState, rejectWithValue }) => {
+    const state = getState() as RootState;
+    const authToken = state.auth.token;
+
+    if (!authToken) {
+      return rejectWithValue("You are not authorized to perform this action!");
+    }
+
     try {
       const response = await fetch("http://localhost:5001/todo", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify(todoData),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData.message || "Failed to add todo");
+      }
+
       const data = await response.json();
       return data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.message);
     }
   }
 );
 
 export const deleteTodo = createAsyncThunk(
   "todos/deleteTodo",
-  async ({ todoId }: { todoId: Todo }, { rejectWithValue }) => {
+  async (
+    { todoId, token }: { todoId: Todo; token: string },
+    { getState, rejectWithValue }
+  ) => {
     try {
-      await fetch(`http://localhost:5001/todo/${todoId}`, {
+      const state = getState() as RootState;
+      const authToken = state.auth.token;
+
+      if (authToken !== token) {
+        return rejectWithValue(
+          "You are not authorized to perform this action!"
+        );
+      }
+
+      const deletedTodo = await fetch(`http://localhost:5001/todo/${todoId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          // Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-      return todoId; // return the ID of the deleted todo
+      const data = await deletedTodo.json();
+      return data.statusCode; // return the ID of the deleted todo
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return error;
+    }
+  }
+);
+
+export const updateTodo = createAsyncThunk(
+  "todos/updateTodo",
+  async (
+    {
+      todoId,
+      taskTitle,
+      taskDescription,
+      isComplete,
+      token,
+    }: {
+      todoId: string;
+      taskTitle: string;
+      taskDescription: string;
+      isComplete: boolean;
+      token: string;
+    },
+    { getState, rejectWithValue }
+  ) => {
+    try {
+      const state = getState() as RootState;
+      const authToken = state.auth.token;
+
+      if (authToken !== token) {
+        return rejectWithValue(
+          "You are not authorized to perform this action!"
+        );
+      }
+
+      const response = await fetch(`http://localhost:5001/todo/${todoId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          taskTitle,
+          taskDescription,
+          isComplete,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData.message || "Failed to update todo");
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return error;
     }
   }
 );
@@ -122,6 +196,21 @@ export const todosSlice = createSlice({
       state.error = "";
     });
     builder.addCase(deleteTodo.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || "";
+    });
+
+    builder.addCase(updateTodo.fulfilled, (state, action) => {
+      state.loading = false;
+      state.todos = state.todos.map((todo: Todo) => {
+        if (todo._id === action.payload.id) {
+          return action.payload;
+        }
+        return todo;
+      });
+      state.error = "";
+    });
+    builder.addCase(updateTodo.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message || "";
     });

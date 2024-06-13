@@ -7,7 +7,7 @@ interface PaginationData {
 }
 const initialState: PaginationData = {
   currentPage: 1,
-  itemsPerPage: 5,
+  itemsPerPage: 4,
 };
 
 export const paginationSlice = createSlice({

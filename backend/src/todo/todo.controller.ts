@@ -27,7 +27,7 @@ export class TodoController {
 
   @Get()
   async findAll(
-    @Query('limit') limit: number = 5,
+    @Query('limit') limit: number = 4,
     @Query('page') page: number = 1,
     @Query('sort') sort: string = 'createdAt',
     @Query('order') order: string = 'desc',

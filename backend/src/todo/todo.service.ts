@@ -39,13 +39,13 @@ export class TodoService {
     sort: string,
     order: string,
   ): Promise<{ data: Todo[]; pagination: any }> {
-    const sortOrder = order === 'asc' ? 1 : -1;
+    const sortOrder = order === 'desc' ? 1 : -1;
     const skip = (page - 1) * limit;
 
     const [total, todos] = await Promise.all([
-      this.todoModel.countDocuments().exec(),
+      this.todoModel.countDocuments({ isComplete: false }).exec(), // Filter only incomplete todos
       this.todoModel
-        .find()
+        .find({ isComplete: false }) // Filter only incomplete todos
         .sort({ [sort]: sortOrder })
         .limit(limit)
         .skip(skip >= 0 ? skip : 0)
@@ -64,6 +64,23 @@ export class TodoService {
         totalPages: Math.ceil(total / limit),
         itemsPerPage: limit,
       },
+    };
+  }
+
+  async findAllCompleted(): Promise<{ data: Todo[] }> {
+    const [total, todos] = await Promise.all([
+      this.todoModel.countDocuments().exec(),
+      this.todoModel.find().exec(),
+    ]);
+
+    const finalTodos = todos.filter((todo) => todo.isComplete !== false);
+
+    if (!todos) {
+      throw new NotFoundException('Todo Not Found');
+    }
+
+    return {
+      data: finalTodos,
     };
     // return `This action returns all todo`;
   }

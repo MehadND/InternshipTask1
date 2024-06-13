@@ -30,9 +30,14 @@ export class TodoController {
     @Query('limit') limit: number = 5,
     @Query('page') page: number = 1,
     @Query('sort') sort: string = 'createdAt',
-    @Query('order') order: string = 'asc',
+    @Query('order') order: string = 'desc',
   ): Promise<{ data: Todo[]; pagination: any }> {
     return this.todoService.findAll(limit, page, sort, order);
+  }
+
+  @Get('completed')
+  async findAllCompleted(): Promise<{ data: Todo[] }> {
+    return this.todoService.findAllCompleted();
   }
 
   @Get(':id')

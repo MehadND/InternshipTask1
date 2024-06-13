@@ -2,24 +2,27 @@ import { Todo } from "@/interfaces/todo";
 import { RootState } from "@/redux/store";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-interface PaginationData {
+interface Pagination {
   totalItems: number;
-  currentPage: number;
   totalPages: number;
-  itemsPerPage: number;
 }
 
 interface TodosState {
   loading: boolean;
   todos: Todo[];
-  paginationData: PaginationData | null;
+  paginationData: Pagination;
+  completedTodos: Todo[];
   error: string;
 }
 
 const initialState: TodosState = {
   loading: false,
   todos: [],
-  paginationData: null,
+  paginationData: {
+    totalItems: 0,
+    totalPages: 0,
+  },
+  completedTodos: [],
   error: "",
 };
 
@@ -34,13 +37,25 @@ export const fetchTodos = createAsyncThunk(
   }
 );
 
+export const fetchCompletedTodos = createAsyncThunk(
+  "todos/fetchCompletedTodos",
+  async () => {
+    const response = await fetch(`http://localhost:5001/todo/completed`);
+    const data = await response.json();
+    return data.data;
+  }
+);
+
 export const addTodo = createAsyncThunk(
   "todos/addTodo",
-  async ({ todoData }: { todoData: Todo }, { getState, rejectWithValue }) => {
+  async (
+    { todoData, token }: { todoData: Todo; token: string },
+    { getState, rejectWithValue }
+  ) => {
     const state = getState() as RootState;
     const authToken = state.auth.token;
 
-    if (!authToken) {
+    if (authToken !== token) {
       return rejectWithValue("You are not authorized to perform this action!");
     }
 
@@ -49,7 +64,7 @@ export const addTodo = createAsyncThunk(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(todoData),
       });
@@ -70,7 +85,7 @@ export const addTodo = createAsyncThunk(
 export const deleteTodo = createAsyncThunk(
   "todos/deleteTodo",
   async (
-    { todoId, token }: { todoId: Todo; token: string },
+    { todoId, token }: { todoId: string; token: string },
     { getState, rejectWithValue }
   ) => {
     try {
@@ -155,9 +170,7 @@ export const updateTodo = createAsyncThunk(
 export const todosSlice = createSlice({
   name: "todos",
   initialState,
-  reducers: {
-    // Define your initial reducers here if you have any
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder.addCase(fetchTodos.pending, (state) => {
       state.loading = true;
@@ -171,19 +184,34 @@ export const todosSlice = createSlice({
     builder.addCase(fetchTodos.rejected, (state, action) => {
       state.loading = false;
       state.todos = [];
+      state.paginationData = {
+        totalItems: 0,
+        totalPages: 0,
+      };
       state.error = action.error.message || "";
     });
 
+    builder.addCase(fetchCompletedTodos.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(fetchCompletedTodos.fulfilled, (state, action) => {
+      state.loading = false;
+      state.completedTodos = action.payload;
+      state.error = "";
+    });
+    builder.addCase(fetchCompletedTodos.rejected, (state, action) => {
+      state.loading = false;
+      state.todos = [];
+      state.error = action.error.message || "";
+    });
+
+    builder.addCase(addTodo.pending, (state) => {
+      state.loading = true;
+    });
     builder.addCase(addTodo.fulfilled, (state, action) => {
       state.loading = false;
-      state.todos.push(action.payload.data);
+      state.todos.push(action.payload); // Assuming the new todo is in action.payload.data
       state.error = "";
-      if (state.paginationData) {
-        state.paginationData.totalItems += 1;
-        state.paginationData.totalPages = Math.ceil(
-          state.paginationData.totalItems / state.paginationData.itemsPerPage
-        );
-      }
     });
     builder.addCase(addTodo.rejected, (state, action) => {
       state.loading = false;

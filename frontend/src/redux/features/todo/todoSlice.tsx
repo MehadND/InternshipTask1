@@ -30,9 +30,10 @@ export const fetchTodos = createAsyncThunk(
   "todos/fetchTodos",
   async ({ itemsPerPage, page }: { itemsPerPage: number; page: number }) => {
     const response = await fetch(
-      `http://localhost:5001/todo?limit=${itemsPerPage}&page=${page}`
+      `http://localhost:5001/api/todo?limit=${itemsPerPage}&page=${page}`
     );
     const data = await response.json();
+
     return data;
   }
 );
@@ -40,7 +41,7 @@ export const fetchTodos = createAsyncThunk(
 export const fetchCompletedTodos = createAsyncThunk(
   "todos/fetchCompletedTodos",
   async () => {
-    const response = await fetch(`http://localhost:5001/todo/completed`);
+    const response = await fetch(`http://localhost:5001/api/todo/completed`);
     const data = await response.json();
     return data.data;
   }
@@ -60,7 +61,7 @@ export const addTodo = createAsyncThunk(
     }
 
     try {
-      const response = await fetch("http://localhost:5001/todo", {
+      const response = await fetch("http://localhost:5001/api/todo", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -98,13 +99,16 @@ export const deleteTodo = createAsyncThunk(
         );
       }
 
-      const deletedTodo = await fetch(`http://localhost:5001/todo/${todoId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const deletedTodo = await fetch(
+        `http://localhost:5001/api/todo/${todoId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       const data = await deletedTodo.json();
       return data.statusCode; // return the ID of the deleted todo
     } catch (error) {
@@ -141,7 +145,7 @@ export const updateTodo = createAsyncThunk(
         );
       }
 
-      const response = await fetch(`http://localhost:5001/todo/${todoId}`, {
+      const response = await fetch(`http://localhost:5001/api/todo/${todoId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

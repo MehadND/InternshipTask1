@@ -20,6 +20,8 @@ import { setOpen } from "@/redux/features/sheetOpen/sheetOpenSlice";
 import { AppDispatch, RootState } from "@/redux/store";
 import { Textarea } from "@/components/ui/textarea";
 import { setCurrentPage } from "@/redux/features/pagination/paginationSlice";
+import { Badge } from "../ui/badge";
+import StatusSwitch from "./status-switch";
 
 const Details = () => {
   const selectedTask = useSelector(
@@ -58,8 +60,9 @@ const Details = () => {
 
       if (deleteTodo.fulfilled.match(resultAction)) {
         if (resultAction.payload === 401) {
-          toast.error("You are not authorized to perform this action!");
-          dispatch(setCurrentPage(paginationData.totalPages));
+          toast.error("Unauthorized: Please login to delete todos.");
+          // dispatch(setCurrentPage(curr));
+          dispatch(setOpen(false));
           return;
         }
 
@@ -149,6 +152,13 @@ const Details = () => {
     }
   };
 
+  const handleTaskTitleTextArea = (e) => {
+    // Return if user presses the enter key
+    if (e.nativeEvent.inputType === "insertLineBreak") return;
+
+    setUpdatedTaskTitle(e.target.value);
+  };
+
   return (
     <div>
       {selectedTask && (
@@ -176,8 +186,36 @@ const Details = () => {
                         defaultValue={selectedTask?.taskTitle}
                       /> */}
                       <CardDescription>
-                        <div className="flex flex-col">
-                          <span>Task ID: {selectedTask?._id}</span>
+                        <div className="flex flex-col gap-1">
+                          <div className="w-full grid grid-cols-4">
+                            <p className="col-span-1">Task ID</p>
+                            <p className="col-span-3">{selectedTask?._id}</p>
+                          </div>
+                          <div className="w-full grid grid-cols-4">
+                            <p className="col-span-1">Created at</p>
+                            <p className="col-span-3">
+                              {new Date(
+                                selectedTask?.createdAt
+                              ).toLocaleDateString("en-gb", {
+                                dateStyle: "full",
+                              })}
+                            </p>
+                          </div>
+                          <div className="w-full grid grid-cols-4">
+                            <p className="col-span-1">Status</p>
+                            <p className="col-span-3">
+                              {selectedTask?.isComplete ? (
+                                <span className="text-green-500">
+                                  Completed
+                                </span>
+                              ) : (
+                                <span className="text-destructive">
+                                  Not Completed
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          {/* <span>Task ID: {selectedTask?._id}</span>
                           <span>
                             Created at:{" "}
                             {new Date(
@@ -200,7 +238,7 @@ const Details = () => {
                                 Not Completed
                               </span>
                             )}
-                          </span>
+                          </span> */}
                         </div>
                       </CardDescription>
                       <div className="flex flex-col gap-4 mt-6">
@@ -211,17 +249,18 @@ const Details = () => {
                         {selectedTask.taskTitle && (
                           <Textarea
                             id="task-title"
-                            className="h-full"
+                            className="resize-none  overflow-y-hidden"
+                            rows={1}
                             value={updatedTaskTitle}
                             onChange={(
                               e: React.ChangeEvent<HTMLTextAreaElement>
                             ) => {
-                              setUpdatedTaskTitle(e.target.value);
+                              handleTaskTitleTextArea(e); // prevents user from going to next line...keps title textfield to be on single line
                             }}
                           />
                         )}
                       </div>
-                      <div className="mt-6 h-72 flex flex-col gap-4">
+                      <div className="mt-6 h-56 flex flex-col gap-4">
                         <label className="text-muted-foreground">
                           Task Description
                         </label>
@@ -240,9 +279,10 @@ const Details = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-evenly w-full">
+                  <div className="flex items-center justify-evenly w-full mb-2">
                     {!selectedTask.isComplete && (
                       <SaveIcon
+                        tabIndex={0}
                         onClick={() =>
                           updateTask({
                             id: selectedTask._id as string,
@@ -253,6 +293,7 @@ const Details = () => {
                       />
                     )}
                     <TrashIcon
+                      tabIndex={0}
                       onClick={() => {
                         deleteTask(selectedTask._id);
                       }}

@@ -53,7 +53,11 @@ const AddTodo: React.FC = () => {
       // Clear the form after submission
       setTaskTitle("");
     } else {
-      toast.error("Failed to add todo.");
+      if (resultAction.payload === "Unauthorized") {
+        toast.error("Unauthorized: Please login to add todos.");
+      } else {
+        toast.error("Failed to add todo.");
+      }
     }
   };
 
@@ -62,16 +66,15 @@ const AddTodo: React.FC = () => {
       className="py-4 justify-center flex items-center"
       onSubmit={handleSubmit}
     >
-      <div className="max-w-screen-md w-full flex items-center gap-4">
+      <div className="fixed bottom-4 sm:max-w-screen-md sm:w-full flex items-center gap-4">
         <Input
           type="text"
           id="taskTitle"
           placeholder="Enter Task Title..."
           value={taskTitle}
           onChange={(e) => setTaskTitle(e.target.value)}
-          required
+          // required
         />
-        {error && <p style={{ color: "red" }}>{error}</p>}
         <Button variant="outline" type="submit">
           Add Todo
         </Button>

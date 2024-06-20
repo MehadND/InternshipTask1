@@ -9,7 +9,12 @@ import {
   CollapsibleTrigger,
 } from "../ui/collapsible";
 import { Badge } from "../ui/badge";
-import { ChevronRightIcon } from "lucide-react";
+import {
+  ChevronRightIcon,
+  DeleteIcon,
+  EditIcon,
+  TrashIcon,
+} from "lucide-react";
 import PaginationControls from "./pagination-control";
 import { setSelectedTask } from "@/redux/features/selectedTask/selectedTaskSlice";
 import { setOpen } from "@/redux/features/sheetOpen/sheetOpenSlice";
@@ -19,6 +24,7 @@ import {
   fetchCompletedTodos,
   fetchTodos,
 } from "@/redux/features/todo/todoSlice";
+import { Button } from "../ui/button";
 // import Pagination from "../pagination";
 
 const DisplayTodo = () => {
@@ -44,7 +50,7 @@ const DisplayTodo = () => {
   };
 
   const updateTaskIsComplete = async (id, isComplete) => {
-    const response = await fetch(`http://localhost:5001/todo/${id}`, {
+    const response = await fetch(`http://localhost:5001/api/todo/${id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -56,6 +62,7 @@ const DisplayTodo = () => {
     });
     if (!response.ok && response.status === 401) {
       toast.error("You are not authorized to perform this action!");
+      return;
     }
     dispatch(fetchTodos({ itemsPerPage: itemsPerPage, page: currentPage }));
     dispatch(fetchCompletedTodos());
@@ -63,25 +70,24 @@ const DisplayTodo = () => {
 
   return (
     <>
-      <ScrollArea className="h-96 flex flex-col gap-4 p-4 pb-6 border rounded-lg">
+      <ScrollArea className="h-96 flex flex-col gap-4 rounded-2xl">
         <div>
           {todos &&
             todos
-              .filter((todo) => !todo?.isComplete)
+              // .filter((todo) => !todo?.isComplete)
               .map((todo, index) => (
                 <div
                   key={index}
-                  className="m-4 gap-4 flex items-center group/sub transition-all duration-300 group-hover/sub:bg-primary/10"
+                  className="m-4 gap-4 flex items-center group/sub transition-all duration-300"
                 >
                   <div
                     tabIndex={0}
-                    onClick={() => handleEditTask(todo)}
-                    className={`flex items-center w-full  rounded-3xl gap-4 px-4 py-4 scale-95 hover:cursor-pointer transition-all duration-300 group-hover/sub:bg-primary/10  focus-visible:bg-primary/10 focus-visible:scale-100  
+                    className={`flex items-center w-full  rounded-3xl gap-4 px-4 py-4 scale-95 transition-all duration-300 group-hover/sub:bg-secondary focus-visible:bg-secondary  
                   
                         ${
                           todo._id === selectedTask?._id && open === true
-                            ? "border border-primary"
-                            : "border border-transparent"
+                            ? " bg-secondary"
+                            : " bg-transparent"
                         }`}
                   >
                     <span
@@ -101,7 +107,14 @@ const DisplayTodo = () => {
                       // ref={index + 1 === todos.length ? cardRef : null} // Assign cardRef to the last todo item
                       className="flex items-center w-full"
                     >
-                      <p className="">{todo?.taskTitle}</p>
+                      <p className="line-clamp-1 text-sm">{todo?.taskTitle}</p>
+                    </div>
+                    <div className="border-l border-ring pl-2 ">
+                      <EditIcon
+                        tabIndex={0}
+                        className="w-5 transition-all duration-300 hover:text-muted-foreground hover:cursor-pointer"
+                        onClick={() => handleEditTask(todo)}
+                      />
                     </div>
                   </div>
                 </div>
@@ -111,7 +124,7 @@ const DisplayTodo = () => {
             <CollapsibleTrigger className="flex items-center justify-start ml-4">
               <div className="flex items-center">
                 <Badge
-                  className="text-md font-semibold capitalize rounded-3xl items-center flex"
+                  className=" font-semibold capitalize items-center flex"
                   variant="secondary"
                 >
                   <ChevronRightIcon
@@ -127,17 +140,17 @@ const DisplayTodo = () => {
                 completedTodos.map((todo, index) => (
                   <div
                     key={index}
-                    className="m-4 gap-4 flex items-center group/sub transition-all duration-300 group-hover/sub:bg-primary/10"
+                    className="m-4 gap-4 flex items-center group/sub transition-all duration-300"
                   >
                     <div
                       tabIndex={0}
-                      onClick={() => handleEditTask(todo)}
-                      className={`flex items-center w-full rounded-3xl gap-4 px-4 py-4 scale-95 hover:cursor-pointer transition-all duration-300 opacity-60 group-hover/sub:bg-primary/10 focus-visible:bg-primary/10 focus-visible:scale-100 
-                      ${
-                        todo._id === selectedTask?._id && open === true
-                          ? "border border-primary"
-                          : "border border-transparent"
-                      }`}
+                      className={`flex items-center w-full opacity-70 rounded-3xl gap-4 px-4 py-4 scale-95 transition-all duration-300 group-hover/sub:bg-secondary focus-visible:bg-secondary  
+                  
+                        ${
+                          todo._id === selectedTask?._id && open === true
+                            ? " bg-secondary"
+                            : " bg-transparent"
+                        }`}
                     >
                       <span
                         className="flex items-center"
@@ -154,11 +167,18 @@ const DisplayTodo = () => {
                       </span>
                       <div
                         // ref={index + 1 === todos.length ? cardRef : null} // Assign cardRef to the last todo item
-                        className="flex items-center w-full justify-between"
+                        className="flex items-center w-full"
                       >
-                        {todo?.taskTitle && (
-                          <p className="line-through">{todo?.taskTitle}</p>
-                        )}
+                        <p className="line-clamp-1 text-sm line-through">
+                          {todo?.taskTitle}
+                        </p>
+                      </div>
+                      <div className="border-l border-ring pl-2 ">
+                        <EditIcon
+                          tabIndex={0}
+                          className="w-5 transition-all duration-300 hover:text-muted-foreground hover:cursor-pointer"
+                          onClick={() => handleEditTask(todo)}
+                        />
                       </div>
                     </div>
                   </div>

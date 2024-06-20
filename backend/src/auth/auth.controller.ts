@@ -3,7 +3,7 @@ import { AuthPayloadDto } from './dto/auth-payload.dto';
 import { LocalGuard } from './guards/local.guard';
 import { AuthService } from './auth.service';
 
-@Controller('todo')
+@Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 

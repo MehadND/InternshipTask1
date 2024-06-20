@@ -9,7 +9,7 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-  username: null,
+  username: localStorage.getItem("username") || null,
   token: localStorage.getItem("authToken") || null,
   isAuthenticated: localStorage.getItem("authToken") ? true : false,
   loading: false,
@@ -23,7 +23,7 @@ export const loginUser = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await fetch("http://localhost:5001/todo/login", {
+      const response = await fetch("http://localhost:5001/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -37,14 +37,13 @@ export const loginUser = createAsyncThunk(
       // Check if the response is ok (status is in the range 200-299)
       if (!response.ok) {
         const errorData = await response.json();
-        console.log(errorData);
-        return rejectWithValue(errorData.message || "Login failed");
+        return rejectWithValue(errorData || "Login failed");
       }
 
       const data = await response.json();
       return data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error);
     }
   }
 );
@@ -58,6 +57,7 @@ export const authSlice = createSlice({
       state.username = null;
       state.isAuthenticated = false;
       localStorage.removeItem("authToken");
+      localStorage.removeItem("username");
     },
   },
   extraReducers: (builder) => {
@@ -73,6 +73,7 @@ export const authSlice = createSlice({
         state.isAuthenticated = true;
         state.error = null;
         localStorage.setItem("authToken", action.payload.token);
+        localStorage.setItem("username", action.payload.username);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;

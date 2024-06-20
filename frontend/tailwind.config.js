@@ -75,6 +75,8 @@ module.exports = {
         gwendolyn: ["Gwendolyn", "cursive"],
         anton: ["Anton", "sans-serif"],
         sriracha: ["Sriracha", "cursive"],
+        playwright: ["Playwrite CO", "cursive"],
+        kalam: ["Kalam", "cursive"],
         notosans: ["Noto Sans", "sans-serif"],
         ubuntumono: ["Ubuntu Mono", "monospace"],
         // Add more custom font families as needed

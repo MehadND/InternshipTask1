@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { addTodo, fetchTodos } from "@/redux/features/todo/todoSlice";
-import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { setCurrentPage } from "@/redux/features/pagination/paginationSlice";
 import { Button } from "../ui/button";
@@ -17,7 +16,6 @@ const AddTodo: React.FC = () => {
   const { itemsPerPage } = useSelector((state: RootState) => state.pagination);
 
   const [taskTitle, setTaskTitle] = useState("");
-  const error = useSelector((state: RootState) => state.todos.error);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,27 +35,24 @@ const AddTodo: React.FC = () => {
       addTodo({ todoData, token: authToken })
     );
 
+    if (resultAction.payload === "Unauthorized") {
+      toast.error(resultAction.payload);
+      return;
+    }
+
     if (addTodo.fulfilled.match(resultAction)) {
       toast.success("Todo added successfully!");
 
-      // Calculate new total items and total pages
       const newTotalItems = paginationData.totalItems + 1;
       const newTotalPages = Math.ceil(newTotalItems / itemsPerPage);
 
-      // Update pagination state
       dispatch(setCurrentPage(newTotalPages));
 
-      // Fetch todos for the new last page
       dispatch(fetchTodos({ itemsPerPage, page: newTotalPages }));
 
-      // Clear the form after submission
       setTaskTitle("");
     } else {
-      if (resultAction.payload === "Unauthorized") {
-        toast.error("Unauthorized: Please login to add todos.");
-      } else {
-        toast.error("Failed to add todo.");
-      }
+      toast.error("Failed to add todo.");
     }
   };
 
@@ -73,7 +68,6 @@ const AddTodo: React.FC = () => {
           placeholder="Enter Task Title..."
           value={taskTitle}
           onChange={(e) => setTaskTitle(e.target.value)}
-          // required
         />
         <Button variant="outline" type="submit">
           Add Todo

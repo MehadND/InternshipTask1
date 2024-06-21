@@ -78,7 +78,7 @@ export const addTodo = createAsyncThunk(
       const data = await response.json();
       return data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return error;
     }
   }
 );

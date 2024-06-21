@@ -20,8 +20,6 @@ import { setOpen } from "@/redux/features/sheetOpen/sheetOpenSlice";
 import { AppDispatch, RootState } from "@/redux/store";
 import { Textarea } from "@/components/ui/textarea";
 import { setCurrentPage } from "@/redux/features/pagination/paginationSlice";
-import { Badge } from "../ui/badge";
-import StatusSwitch from "./status-switch";
 
 const Details = () => {
   const selectedTask = useSelector(
@@ -31,7 +29,7 @@ const Details = () => {
   const paginationData = useSelector(
     (state: RootState) => state.todos.paginationData
   );
-  const { itemsPerPage, currentPage, totalItems, totalPages } = useSelector(
+  const { itemsPerPage, currentPage } = useSelector(
     (state: RootState) => state.pagination
   );
   const { token } = useSelector((state: RootState) => state.auth);
@@ -60,29 +58,23 @@ const Details = () => {
 
       if (deleteTodo.fulfilled.match(resultAction)) {
         if (resultAction.payload === 401) {
-          toast.error("Unauthorized: Please login to delete todos.");
-          // dispatch(setCurrentPage(curr));
+          toast.error(resultAction.payload);
           dispatch(setOpen(false));
           return;
         }
 
         toast.success("Task Deleted Successfully!");
 
-        // Calculate new total items and total pages
         const newTotalItems = paginationData.totalItems - 1;
         const newTotalPages = Math.ceil(newTotalItems / itemsPerPage);
 
-        // If the current page becomes empty after deletion, move to the previous page
         const newCurrentPage =
           currentPage > newTotalPages ? newTotalPages : currentPage;
 
-        // Update pagination state
         dispatch(setCurrentPage(newCurrentPage));
 
-        // Fetch todos for the current page after deletion
         dispatch(fetchTodos({ itemsPerPage, page: newCurrentPage }));
 
-        // Optionally close any open dialogs or modals
         dispatch(setOpen(false));
       } else {
         console.log("Failed to delete todo:", resultAction.payload);
@@ -93,31 +85,6 @@ const Details = () => {
       toast.error("An error occurred while deleting the todo");
     }
   };
-
-  // const updateTaskDescription = async (taskDescription: string) => {
-  //   if (selectedTask?._id) {
-  //     setUpdatedTaskDescription(taskDescription);
-  //   }
-  // };
-
-  // const updateTaskTitle = async (taskTitle) => {
-  //   if (selectedTask?._id) {
-  //     await fetch(`http://localhost:5001/todo/${selectedTask._id}`, {
-  //       method: "PATCH",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcm5hbWUiOiJtZWhhZG5kIiwiaWF0IjoxNzE4MDAxNDczLCJleHAiOjE3MTg2MDYyNzN9.ud5IBExNMDlViMBVXdpYas82yc2UrozpTJqRcIhWw_E `,
-  //       },
-  //       body: JSON.stringify({
-  //         taskTitle,
-  //       }),
-  //     });
-  //     // Optionally, refetch todos to update the list
-  //     dispatch(
-  //       fetchTodos({ itemsPerPage, page: paginationData?.currentPage || 1 })
-  //     );
-  //   }
-  // };
 
   const updateTask = async ({
     id,
@@ -138,8 +105,6 @@ const Details = () => {
       );
       if (updateTodo.fulfilled.match(resultAction)) {
         toast.success("Task Updated Successfully!");
-        // dispatch(setOpen(false));
-        // dispatch(setCurrentPage(totalPages));
         dispatch(setOpen(false));
         dispatch(fetchTodos({ itemsPerPage: itemsPerPage, page: currentPage }));
         dispatch(fetchCompletedTodos());
@@ -153,7 +118,7 @@ const Details = () => {
   };
 
   const handleTaskTitleTextArea = (e) => {
-    // Return if user presses the enter key
+    // ignore if user presses the enter key
     if (e.nativeEvent.inputType === "insertLineBreak") return;
 
     setUpdatedTaskTitle(e.target.value);
@@ -179,12 +144,6 @@ const Details = () => {
                 <div className=" h-full overflow-auto flex flex-col justify-between">
                   <div>
                     <div>
-                      {/* <TaskDescriptionEditor
-                        id="task-title"
-                        label="Task Title"
-                        onSave={updateTaskTitle}
-                        defaultValue={selectedTask?.taskTitle}
-                      /> */}
                       <CardDescription>
                         <div className="flex flex-col gap-1">
                           <div className="w-full grid grid-cols-4">
@@ -215,34 +174,9 @@ const Details = () => {
                               )}
                             </p>
                           </div>
-                          {/* <span>Task ID: {selectedTask?._id}</span>
-                          <span>
-                            Created at:{" "}
-                            {new Date(
-                              selectedTask?.createdAt
-                            ).toLocaleDateString("en-gb", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "numeric",
-                              minute: "numeric",
-                              second: "numeric",
-                            })}
-                          </span>
-                          <span>
-                            Status:{" "}
-                            {selectedTask?.isComplete ? (
-                              <span className="text-green-500">Completed</span>
-                            ) : (
-                              <span className="text-destructive">
-                                Not Completed
-                              </span>
-                            )}
-                          </span> */}
                         </div>
                       </CardDescription>
                       <div className="flex flex-col gap-4 mt-6">
-                        {/* {selectedTask && <p>{selectedTask.taskTitle}</p>} */}
                         <label className="text-muted-foreground">
                           Task Title
                         </label>
@@ -255,7 +189,7 @@ const Details = () => {
                             onChange={(
                               e: React.ChangeEvent<HTMLTextAreaElement>
                             ) => {
-                              handleTaskTitleTextArea(e); // prevents user from going to next line...keps title textfield to be on single line
+                              handleTaskTitleTextArea(e);
                             }}
                           />
                         )}

@@ -19,7 +19,6 @@ export const selectedTaskSlice = createSlice({
   },
 });
 
-// Action creators are generated for each case reducer function
 export const { setSelectedTask } = selectedTaskSlice.actions;
 
 export default selectedTaskSlice.reducer;

@@ -4,7 +4,6 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 import { logout } from "@/redux/features/auth/authSlice";
-import { useEffect, useState } from "react";
 
 const Navbar = () => {
   const { username, isAuthenticated } = useSelector(
@@ -22,7 +21,6 @@ const Navbar = () => {
     <div className="flex items-center justify-between w-full p-4">
       <div>
         <h1 className="font-playwright scroll-m-20 text-2xl tracking-widest lg:text-3xl">
-          {/* {new Date().toLocaleString("en-US", { dateStyle: "full" })} */}
           <Link to={"/"}>Todo</Link>
         </h1>
       </div>

@@ -13,6 +13,7 @@ import PaginationControls from "./pagination-control";
 const TodoApp = () => {
   const dispatch = useDispatch<AppDispatch>();
 
+  const todos = useSelector((state: RootState) => state.todos.todos);
   const loading = useSelector((state: RootState) => state.todos.loading);
   const { itemsPerPage, currentPage } = useSelector(
     (state: RootState) => state.pagination
@@ -23,14 +24,16 @@ const TodoApp = () => {
     dispatch(fetchCompletedTodos());
   }, [dispatch, itemsPerPage, currentPage]);
 
+  if (loading || todos.length <= 0) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <span className="loader"></span>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 justify-center flex items-center">
-      {loading && (
-        <div className="flex h-96 items-center justify-center">
-          <span className="loader"></span>
-        </div>
-      )}
-      {/* {error && <p style={{ color: "red" }}>{error}</p>} */}
       {!loading && (
         <div className="w-full max-w-screen-md">
           <DisplayTodo />
@@ -41,10 +44,9 @@ const TodoApp = () => {
 
           <PaginationControls />
 
-          <Details />
-
           <AddTodo />
-          {/* <CreateTask /> */}
+
+          <Details />
         </div>
       )}
     </div>

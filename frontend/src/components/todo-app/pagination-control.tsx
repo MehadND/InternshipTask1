@@ -1,7 +1,5 @@
-import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
-import { fetchTodos } from "@/redux/features/todo/todoSlice";
 import {
   Select,
   SelectContent,
@@ -87,12 +85,12 @@ const PaginationControls = () => {
 
         <span className="text-sm">
           Items:{" "}
-          {paginationData && paginationData.totalItems > 0 // Check if there are any items
-            ? (currentPage - 1) * itemsPerPage + 1 // Calculate start index
+          {paginationData && paginationData.totalItems > 0
+            ? (currentPage - 1) * itemsPerPage + 1
             : 0}{" "}
           -{" "}
-          {paginationData && paginationData.totalItems > 0 // Check if there are any items
-            ? Math.min(currentPage * itemsPerPage, paginationData?.totalItems) // Calculate end index
+          {paginationData && paginationData.totalItems > 0
+            ? Math.min(currentPage * itemsPerPage, paginationData?.totalItems)
             : 0}{" "}
           of {paginationData?.totalItems || 0}
         </span>

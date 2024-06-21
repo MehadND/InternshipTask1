@@ -34,7 +34,6 @@ export const loginUser = createAsyncThunk(
         }),
       });
 
-      // Check if the response is ok (status is in the range 200-299)
       if (!response.ok) {
         const errorData = await response.json();
         return rejectWithValue(errorData || "Login failed");

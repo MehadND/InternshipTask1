@@ -1,4 +1,3 @@
-import { Todo } from "@/interfaces/todo";
 import { createSlice } from "@reduxjs/toolkit";
 
 interface sheetOpenState {
@@ -19,7 +18,6 @@ export const sheetOpenSlice = createSlice({
   },
 });
 
-// Action creators are generated for each case reducer function
 export const { setOpen } = sheetOpenSlice.actions;
 
 export default sheetOpenSlice.reducer;

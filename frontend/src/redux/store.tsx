@@ -5,6 +5,7 @@ import selectedTaskSlice from "./features/selectedTask/selectedTaskSlice";
 import sheetOpenSlice from "./features/sheetOpen/sheetOpenSlice";
 import paginationSlice from "./features/pagination/paginationSlice";
 import authSlice from "./features/auth/authSlice";
+import activeTabSlice from "./features/activeTab/activeTabSlice";
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +14,7 @@ export const store = configureStore({
     sheetOpen: sheetOpenSlice,
     pagination: paginationSlice,
     auth: authSlice,
+    activeTab: activeTabSlice,
   },
 });
 

@@ -13,6 +13,11 @@ const fakeUsers = [
     username: 'mehadnd',
     password: 'password',
   },
+  {
+    id: 3,
+    username: 'Frances_McCoy',
+    password: 'password',
+  },
 ];
 
 @Injectable()
@@ -22,13 +27,13 @@ export class AuthService {
   login({ username, password }: AuthPayloadDto) {
     const findUser = fakeUsers.find((user) => user.username === username);
     if (!findUser) {
-        throw new HttpException('Invalid Username', HttpStatus.UNAUTHORIZED);
+      throw new HttpException('Invalid Username', HttpStatus.UNAUTHORIZED);
     }
     if (password === findUser.password) {
       const { password, ...user } = findUser;
       return this.jwtService.sign(user);
     } else {
-        throw new HttpException('Invalid Password', HttpStatus.UNAUTHORIZED);
+      throw new HttpException('Invalid Password', HttpStatus.UNAUTHORIZED);
     }
   }
 }

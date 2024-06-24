@@ -105,8 +105,7 @@ export class TodoService {
 
   async update(id: string, updateTodoDto: UpdateTodoDto): Promise<Todo> {
     try {
-      // Constructing the update object with only the fields that are defined
-      const update: Partial<UpdateTodoDto> = {};
+      const update: Partial<UpdateTodoDto & { updatedAt: Date }> = {};
       if (updateTodoDto.taskTitle !== undefined) {
         update.taskTitle = updateTodoDto.taskTitle;
       }
@@ -116,8 +115,12 @@ export class TodoService {
       if (updateTodoDto.isComplete !== undefined) {
         update.isComplete = updateTodoDto.isComplete;
       }
+      if (updateTodoDto.dueDate !== undefined) {
+        update.dueDate = updateTodoDto.dueDate;
+      }
 
-      // Using the update object in findByIdAndUpdate
+      update.updatedAt = new Date();
+
       const updatedTodo = await this.todoModel
         .findByIdAndUpdate(id, update, { new: true })
         .exec();

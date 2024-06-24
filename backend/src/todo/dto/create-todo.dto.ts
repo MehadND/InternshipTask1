@@ -4,7 +4,19 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  IsDateString,
+  ValidateNested, // Add IsDate validator
 } from 'class-validator';
+
+export class CreateSubtaskDto {
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isComplete?: boolean;
+}
 
 export class CreateTodoDto {
   id?: string;
@@ -22,5 +34,11 @@ export class CreateTodoDto {
   @IsOptional()
   isComplete?: boolean;
 
-  createdAt?: Date;
+  @IsDateString()
+  @IsOptional()
+  dueDate?: Date;
+
+  @ValidateNested({ each: true })
+  @IsOptional()
+  subtasks?: CreateSubtaskDto[];
 }

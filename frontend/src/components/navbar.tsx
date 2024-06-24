@@ -4,6 +4,14 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 import { logout } from "@/redux/features/auth/authSlice";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { LogOutIcon } from "lucide-react";
 
 const Navbar = () => {
   const { username, isAuthenticated } = useSelector(
@@ -24,24 +32,52 @@ const Navbar = () => {
           <Link to={"/"}>Todo</Link>
         </h1>
       </div>
-      {username ? (
-        <h1 className="font-notosans scroll-m-20 text-2xl tracking-widest bg-gradient-to-b from-neutral-600 to-neutral-900 lg:text-3xl">
-          Hi {username}
-        </h1>
-      ) : (
-        <h1 className="font-notosans scroll-m-20 text-2xl lg:text-3xl">
-          Hi Guest
-        </h1>
-      )}
+
       <div className="flex items-center gap-4">
         {isAuthenticated === true ? (
-          <Button variant="secondary" onClick={handleLogout}>
-            Logout
-          </Button>
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="group relative flex h-10 w-fit shrink-0 overflow-hidden rounded-full transition-all duration-300"
+                >
+                  <Avatar className="w-fit">
+                    <AvatarImage />
+                    <AvatarFallback className="p-2">{username}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="flex flex-col gap-2">
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem>
+                  <div
+                    className="text-destructive flex items-center hover:cursor-pointer"
+                    onClick={handleLogout}
+                  >
+                    <LogOutIcon className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
         ) : (
-          <Link to={"/login"}>
-            <Button variant="secondary">Login</Button>
-          </Link>
+          <>
+            <Button
+              variant="ghost"
+              className="group relative flex h-10 w-fit shrink-0 overflow-hidden rounded-full transition-all duration-300"
+            >
+              <Link to={"/login"}>
+                <Avatar className="w-fit">
+                  <AvatarImage />
+                  <AvatarFallback className="p-2">
+                    {username || "Login"}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            </Button>
+          </>
         )}
         <LightModeToggle />
       </div>

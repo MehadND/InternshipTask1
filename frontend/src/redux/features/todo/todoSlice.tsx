@@ -125,12 +125,14 @@ export const updateTodo = createAsyncThunk(
       taskTitle,
       taskDescription,
       isComplete,
+      dueDate,
       token,
     }: {
       todoId: string;
       taskTitle: string;
       taskDescription: string;
       isComplete: boolean;
+      dueDate: Date | null;
       token: string;
     },
     { getState, rejectWithValue }
@@ -152,9 +154,10 @@ export const updateTodo = createAsyncThunk(
           Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({
-          taskTitle,
-          taskDescription,
-          isComplete,
+          taskTitle: taskTitle,
+          taskDescription: taskDescription,
+          isComplete: isComplete,
+          dueDate: dueDate,
         }),
       });
 
@@ -224,7 +227,7 @@ export const todosSlice = createSlice({
 
     builder.addCase(deleteTodo.fulfilled, (state, action) => {
       state.loading = false;
-      state.todos = state.todos.filter((todo) => todo.id !== action.payload);
+      state.todos = state.todos.filter((todo) => todo._id !== action.payload);
       state.error = "";
     });
     builder.addCase(deleteTodo.rejected, (state, action) => {

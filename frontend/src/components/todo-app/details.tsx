@@ -9,7 +9,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import toast from "react-hot-toast";
 import {
   deleteTodo,
   fetchCompletedTodos,
@@ -20,6 +19,10 @@ import { setOpen } from "@/redux/features/sheetOpen/sheetOpenSlice";
 import { AppDispatch, RootState } from "@/redux/store";
 import { Textarea } from "@/components/ui/textarea";
 import { setCurrentPage } from "@/redux/features/pagination/paginationSlice";
+import { DatePickerWithPresets } from "./due-date-picker"; // Assuming the DatePickerWithPresets component is in the same directory
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { ErrorNotify, SuccessNotify } from "./notify";
+import { useTheme } from "../theme-provider";
 
 const Details = () => {
   const selectedTask = useSelector(
@@ -39,11 +42,18 @@ const Details = () => {
   const [updatedTaskTitle, setUpdatedTaskTitle] = useState<string>("");
   const [updatedTaskDescription, setUpdatedTaskDescription] =
     useState<string>("");
+  const [updateTaskDueDate, setUpdateTaskDueDate] = useState<Date | null>(null);
+
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (selectedTask && open) {
       setUpdatedTaskTitle(selectedTask.taskTitle);
       setUpdatedTaskDescription(selectedTask.taskDescription);
+      setUpdateTaskDueDate(
+        selectedTask.dueDate ? new Date(selectedTask.dueDate) : null
+      );
+      console.log(updateTaskDueDate);
     }
   }, [selectedTask, open]);
 
@@ -58,12 +68,12 @@ const Details = () => {
 
       if (deleteTodo.fulfilled.match(resultAction)) {
         if (resultAction.payload === 401) {
-          toast.error(resultAction.payload);
+          ErrorNotify(resultAction.payload, theme);
           dispatch(setOpen(false));
           return;
         }
 
-        toast.success("Task Deleted Successfully!");
+        SuccessNotify("Task Deleted Successfully!", theme);
 
         const newTotalItems = paginationData.totalItems - 1;
         const newTotalPages = Math.ceil(newTotalItems / itemsPerPage);
@@ -78,11 +88,11 @@ const Details = () => {
         dispatch(setOpen(false));
       } else {
         console.log("Failed to delete todo:", resultAction.payload);
-        toast.error("Failed to delete todo");
+        ErrorNotify("Failed to delete todo", theme);
       }
     } catch (error) {
       console.error("Error deleting todo:", error);
-      toast.error("An error occurred while deleting the todo");
+      ErrorNotify("An error occurred while deleting the todo", theme);
     }
   };
 
@@ -94,22 +104,24 @@ const Details = () => {
     isComplete: boolean;
   }) => {
     try {
+      console.log(updateTaskDueDate);
       const resultAction = await dispatch(
         updateTodo({
           todoId: id || "",
           taskTitle: updatedTaskTitle,
           taskDescription: updatedTaskDescription,
           isComplete: isComplete,
+          dueDate: updateTaskDueDate || null,
           token: token || "",
         })
       );
       if (updateTodo.fulfilled.match(resultAction)) {
-        toast.success("Task Updated Successfully!");
+        SuccessNotify("Task Updated Successfully!", theme);
         dispatch(setOpen(false));
         dispatch(fetchTodos({ itemsPerPage: itemsPerPage, page: currentPage }));
         dispatch(fetchCompletedTodos());
       } else {
-        toast.error((resultAction.payload as string) || "");
+        ErrorNotify((resultAction.payload as string) || "", theme);
         dispatch(setOpen(false));
       }
     } catch (error) {
@@ -161,14 +173,38 @@ const Details = () => {
                             </p>
                           </div>
                           <div className="w-full grid grid-cols-4">
+                            <p className="col-span-1">Updated at</p>
+                            <p className="col-span-3">
+                              {new Date(selectedTask.updatedAt).toLocaleString(
+                                "en-gb",
+                                {
+                                  dateStyle: "full",
+                                  timeStyle: "short",
+                                }
+                              )}
+                            </p>
+                          </div>
+                          <div className="w-full grid grid-cols-4">
+                            <p className="col-span-1">Due Date</p>
+                            <div className="col-span-3">
+                              <DatePickerWithPresets
+                                onChange={setUpdateTaskDueDate}
+                                selectedDate={updateTaskDueDate}
+                                disabled={
+                                  selectedTask.isComplete
+                                    ? selectedTask.isComplete
+                                    : false
+                                }
+                              />
+                            </div>
+                          </div>
+                          <div className="w-full grid grid-cols-4">
                             <p className="col-span-1">Status</p>
                             <p className="col-span-3">
                               {selectedTask?.isComplete ? (
-                                <span className="text-green-500">
-                                  Completed
-                                </span>
+                                <span className="text-success">Completed</span>
                               ) : (
-                                <span className="text-destructive">
+                                <span className="text-failure">
                                   Not Completed
                                 </span>
                               )}
@@ -176,41 +212,77 @@ const Details = () => {
                           </div>
                         </div>
                       </CardDescription>
-                      <div className="flex flex-col gap-4 mt-6">
-                        <label className="text-muted-foreground">
-                          Task Title
-                        </label>
-                        {selectedTask.taskTitle && (
-                          <Textarea
-                            id="task-title"
-                            className="resize-none  overflow-y-hidden"
-                            rows={1}
-                            value={updatedTaskTitle}
-                            onChange={(
-                              e: React.ChangeEvent<HTMLTextAreaElement>
-                            ) => {
-                              handleTaskTitleTextArea(e);
-                            }}
-                          />
-                        )}
-                      </div>
-                      <div className="mt-6 h-56 flex flex-col gap-4">
-                        <label className="text-muted-foreground">
-                          Task Description
-                        </label>
-                        {selectedTask.taskDescription && (
-                          <Textarea
-                            id="task-desc"
-                            className="h-full"
-                            value={updatedTaskDescription}
-                            onChange={(
-                              e: React.ChangeEvent<HTMLTextAreaElement>
-                            ) => {
-                              setUpdatedTaskDescription(e.target.value);
-                            }}
-                          />
-                        )}
-                      </div>
+                      <Tabs
+                        defaultValue="details"
+                        className="relative w-full mt-3"
+                      >
+                        <TabsList className="">
+                          <TabsTrigger className="" value="details">
+                            Details
+                          </TabsTrigger>
+                          <TabsTrigger className="" value="subtasks">
+                            Subtasks
+                          </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="details">
+                          <div className="flex flex-col gap-4">
+                            <label className="text-muted-foreground">
+                              Task Title
+                            </label>
+                            {selectedTask.taskTitle && (
+                              <Textarea
+                                id="task-title"
+                                className="resize-none -mt-3 overflow-y-hidden"
+                                rows={1}
+                                value={updatedTaskTitle}
+                                onChange={(
+                                  e: React.ChangeEvent<HTMLTextAreaElement>
+                                ) => {
+                                  handleTaskTitleTextArea(e);
+                                }}
+                                readOnly={selectedTask.isComplete}
+                              />
+                            )}
+                          </div>
+                          <div className="mt-3 h-52 flex flex-col gap-4">
+                            <label className="text-muted-foreground">
+                              Task Description
+                            </label>
+                            {selectedTask.taskDescription && (
+                              <Textarea
+                                id="task-desc"
+                                className="h-full -mt-3"
+                                value={updatedTaskDescription}
+                                onChange={(
+                                  e: React.ChangeEvent<HTMLTextAreaElement>
+                                ) => {
+                                  setUpdatedTaskDescription(e.target.value);
+                                }}
+                                readOnly={selectedTask.isComplete}
+                              />
+                            )}
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="subtasks">
+                          <div className="w-full flex flex-col">
+                            {selectedTask.subtasks &&
+                            selectedTask.subtasks.length > 0 ? (
+                              selectedTask.subtasks.map((subtask, index) => {
+                                return (
+                                  <div
+                                    key={index}
+                                    className="rounded-md border px-4 py-3 font-mono text-sm"
+                                  >
+                                    {subtask.title}
+                                  </div>
+                                );
+                              })
+                            ) : (
+                              <span>No subtasks...please add</span>
+                            )}
+                          </div>
+                        </TabsContent>
+                      </Tabs>
                     </div>
                   </div>
                   <div className="flex items-center justify-evenly w-full mb-2">

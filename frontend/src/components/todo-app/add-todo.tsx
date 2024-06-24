@@ -5,7 +5,8 @@ import { addTodo, fetchTodos } from "@/redux/features/todo/todoSlice";
 import { Input } from "../ui/input";
 import { setCurrentPage } from "@/redux/features/pagination/paginationSlice";
 import { Button } from "../ui/button";
-import toast from "react-hot-toast";
+import { ErrorNotify, SuccessNotify } from "./notify";
+import { useTheme } from "../theme-provider";
 
 const AddTodo: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -17,11 +18,13 @@ const AddTodo: React.FC = () => {
 
   const [taskTitle, setTaskTitle] = useState("");
 
+  const { theme } = useTheme();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!taskTitle) {
-      toast.error("Task title is required.");
+      ErrorNotify("Task title is required.", theme);
       return;
     }
 
@@ -36,12 +39,12 @@ const AddTodo: React.FC = () => {
     );
 
     if (resultAction.payload === "Unauthorized") {
-      toast.error(resultAction.payload);
+      ErrorNotify(resultAction.payload, theme);
       return;
     }
 
     if (addTodo.fulfilled.match(resultAction)) {
-      toast.success("Todo added successfully!");
+      SuccessNotify("Todo added successfully!", theme);
 
       const newTotalItems = paginationData.totalItems + 1;
       const newTotalPages = Math.ceil(newTotalItems / itemsPerPage);
@@ -52,7 +55,7 @@ const AddTodo: React.FC = () => {
 
       setTaskTitle("");
     } else {
-      toast.error("Failed to add todo.");
+      ErrorNotify("Failed to add todo.", theme);
     }
   };
 

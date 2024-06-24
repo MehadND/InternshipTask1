@@ -1,10 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
-import {
-  fetchCompletedTodos,
-  fetchTodos,
-} from "@/redux/features/todo/todoSlice";
+import { fetchTodos } from "@/redux/features/todo/todoSlice";
 import AddTodo from "./add-todo";
 import DisplayTodo from "./display-todo";
 import Details from "./details";
@@ -13,18 +10,18 @@ import PaginationControls from "./pagination-control";
 const TodoApp = () => {
   const dispatch = useDispatch<AppDispatch>();
 
-  const todos = useSelector((state: RootState) => state.todos.todos);
   const loading = useSelector((state: RootState) => state.todos.loading);
   const { itemsPerPage, currentPage } = useSelector(
     (state: RootState) => state.pagination
   );
+  const activeTab = useSelector((state: RootState) => state.activeTab.value);
 
   useEffect(() => {
-    dispatch(fetchTodos({ itemsPerPage: itemsPerPage, page: currentPage }));
-    dispatch(fetchCompletedTodos());
+    dispatch(fetchTodos({ itemsPerPage, page: currentPage }));
+    // dispatch(fetchCompletedTodos());
   }, [dispatch, itemsPerPage, currentPage]);
 
-  if (loading || todos.length <= 0) {
+  if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
         <span className="loader"></span>
@@ -42,8 +39,11 @@ const TodoApp = () => {
             <Separator />
           </div> */}
 
-          <PaginationControls />
-
+          {activeTab === "incomplete" && (
+            <>
+              <PaginationControls />
+            </>
+          )}
           <AddTodo />
 
           <Details />

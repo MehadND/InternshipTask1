@@ -1,12 +1,12 @@
-import Navbar from "./components/navbar";
-import Login from "./components/todo-app/login";
-import NotFound from "./components/todo-app/not-found";
-import TodoApp from "./components/todo-app/todo-app";
+import Navbar from "./components/navbar/navbar";
+import Login from "./components/navbar/login";
+import NotFound from "./components/not-found";
+import TodoApp from "./components/todo-app";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {
   return (
-    <>
+    <div className="">
       <BrowserRouter>
         <Navbar />
         <Routes>
@@ -15,7 +15,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-    </>
+    </div>
   );
 }
 

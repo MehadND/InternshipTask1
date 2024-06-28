@@ -7,16 +7,7 @@ import {
   IsDateString,
   ValidateNested, // Add IsDate validator
 } from 'class-validator';
-
-export class CreateSubtaskDto {
-  @IsString()
-  @IsNotEmpty()
-  title: string;
-
-  @IsBoolean()
-  @IsOptional()
-  isComplete?: boolean;
-}
+import { CreateSubtaskDto } from './create-subtask.dto';
 
 export class CreateTodoDto {
   id?: string;

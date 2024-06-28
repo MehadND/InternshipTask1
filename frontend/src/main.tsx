@@ -6,6 +6,7 @@ import { Provider } from "react-redux";
 import { store } from "./redux/store.tsx";
 import { Bounce, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "./i18n.js";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">

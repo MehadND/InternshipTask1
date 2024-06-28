@@ -1,4 +1,3 @@
-import { Todo } from "@/interfaces/todo";
 import { createSlice } from "@reduxjs/toolkit";
 
 interface PaginationData {

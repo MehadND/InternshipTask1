@@ -79,7 +79,7 @@ export const authSlice = createSlice({
         state.username = null;
         state.token = null;
         state.isAuthenticated = false;
-        state.error = action.payload || "";
+        state.error = (action.payload as string) || "";
       });
   },
 });

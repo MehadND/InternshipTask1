@@ -1,6 +1,10 @@
 import { Todo } from "@/interfaces/todo";
 import { RootState } from "@/redux/store";
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import {
+  createAsyncThunk,
+  createSlice,
+  SerializedError,
+} from "@reduxjs/toolkit";
 
 interface Pagination {
   totalItems: number;
@@ -12,7 +16,7 @@ interface TodosState {
   todos: Todo[];
   paginationData: Pagination;
   completedTodos: Todo[];
-  error: string;
+  error: SerializedError | null;
 }
 
 const initialState: TodosState = {
@@ -23,7 +27,7 @@ const initialState: TodosState = {
     totalPages: 0,
   },
   completedTodos: [],
-  error: "",
+  error: null,
 };
 
 export const fetchTodos = createAsyncThunk(
@@ -33,7 +37,8 @@ export const fetchTodos = createAsyncThunk(
       `http://localhost:5001/api/todo?limit=${itemsPerPage}&page=${page}`
     );
     const data = await response.json();
-
+    // delay for 2 seconds
+    // await new Promise((resolve) => setTimeout(resolve, 500));
     return data;
   }
 );
@@ -57,7 +62,7 @@ export const addTodo = createAsyncThunk(
     const authToken = state.auth.token;
 
     if (authToken !== token) {
-      return rejectWithValue("You are not authorized to perform this action!");
+      return rejectWithValue("Unauthorized");
     }
 
     try {
@@ -78,7 +83,7 @@ export const addTodo = createAsyncThunk(
       const data = await response.json();
       return data;
     } catch (error) {
-      return error;
+      return rejectWithValue(error);
     }
   }
 );
@@ -94,9 +99,7 @@ export const deleteTodo = createAsyncThunk(
       const authToken = state.auth.token;
 
       if (authToken !== token) {
-        return rejectWithValue(
-          "You are not authorized to perform this action!"
-        );
+        return rejectWithValue("Unauthorized");
       }
 
       const deletedTodo = await fetch(
@@ -110,9 +113,9 @@ export const deleteTodo = createAsyncThunk(
         }
       );
       const data = await deletedTodo.json();
-      return data.statusCode; // return the ID of the deleted todo
+      return data._id;
     } catch (error) {
-      return error;
+      return rejectWithValue(error);
     }
   }
 );
@@ -142,9 +145,7 @@ export const updateTodo = createAsyncThunk(
       const authToken = state.auth.token;
 
       if (authToken !== token) {
-        return rejectWithValue(
-          "You are not authorized to perform this action!"
-        );
+        return rejectWithValue("Unauthorized");
       }
 
       const response = await fetch(`http://localhost:5001/api/todo/${todoId}`, {
@@ -169,7 +170,7 @@ export const updateTodo = createAsyncThunk(
       const data = await response.json();
       return data;
     } catch (error) {
-      return error;
+      return rejectWithValue(error);
     }
   }
 );
@@ -186,7 +187,7 @@ export const todosSlice = createSlice({
       state.loading = false;
       state.todos = action.payload.data;
       state.paginationData = action.payload.pagination;
-      state.error = "";
+      state.error = null;
     });
     builder.addCase(fetchTodos.rejected, (state, action) => {
       state.loading = false;
@@ -195,7 +196,7 @@ export const todosSlice = createSlice({
         totalItems: 0,
         totalPages: 0,
       };
-      state.error = action.error.message || "";
+      state.error = action.error || null;
     });
 
     builder.addCase(fetchCompletedTodos.pending, (state) => {
@@ -204,12 +205,12 @@ export const todosSlice = createSlice({
     builder.addCase(fetchCompletedTodos.fulfilled, (state, action) => {
       state.loading = false;
       state.completedTodos = action.payload;
-      state.error = "";
+      state.error = null;
     });
     builder.addCase(fetchCompletedTodos.rejected, (state, action) => {
       state.loading = false;
       state.todos = [];
-      state.error = action.error.message || "";
+      state.error = action.error || null;
     });
 
     builder.addCase(addTodo.pending, (state) => {
@@ -218,36 +219,36 @@ export const todosSlice = createSlice({
     builder.addCase(addTodo.fulfilled, (state, action) => {
       state.loading = false;
       state.todos.push(action.payload); // Assuming the new todo is in action.payload.data
-      state.error = "";
+      state.error = null;
     });
     builder.addCase(addTodo.rejected, (state, action) => {
       state.loading = false;
-      state.error = action.error.message || "";
+      state.error = action.error || null;
     });
 
     builder.addCase(deleteTodo.fulfilled, (state, action) => {
       state.loading = false;
       state.todos = state.todos.filter((todo) => todo._id !== action.payload);
-      state.error = "";
+      state.error = null;
     });
     builder.addCase(deleteTodo.rejected, (state, action) => {
       state.loading = false;
-      state.error = action.error.message || "";
+      state.error = action.error || null;
     });
 
     builder.addCase(updateTodo.fulfilled, (state, action) => {
       state.loading = false;
       state.todos = state.todos.map((todo: Todo) => {
-        if (todo._id === action.payload.id) {
+        if (todo._id === action.payload._id) {
           return action.payload;
         }
         return todo;
       });
-      state.error = "";
+      state.error = null;
     });
     builder.addCase(updateTodo.rejected, (state, action) => {
       state.loading = false;
-      state.error = action.error.message || "";
+      state.error = action.error || null;
     });
   },
 });

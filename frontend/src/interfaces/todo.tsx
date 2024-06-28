@@ -1,7 +1,4 @@
-export interface Subtask {
-  title: string;
-  isComplete?: boolean;
-}
+import { Subtask } from "./subtask";
 
 export interface Todo {
   _id?: string;

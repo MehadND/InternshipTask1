@@ -1,14 +1,19 @@
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Todo } from './schemas/todo.schema';
 import { InjectModel } from '@nestjs/mongoose';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { Subtask } from './schemas/subtask.schema';
+import { CreateSubtaskDto } from './dto/create-subtask.dto';
 
 @Injectable()
 export class TodoService {
@@ -16,6 +21,29 @@ export class TodoService {
     @InjectModel(Todo.name)
     private readonly todoModel: Model<Todo>,
   ) {}
+
+  async generatedescription(taskTitle: string): Promise<string> {
+    try {
+      const genAI = new GoogleGenerativeAI(
+        'AIzaSyCP5sKPuSjTT2lf-I0CerE0LPA-XLeCEgQ',
+      );
+
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+      const prompt = `Generate a short task description for a task titled: "${taskTitle}". Give me the description in plain text and do not write title`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      if (!response) {
+        throw new HttpException('Over using API', HttpStatus.TOO_MANY_REQUESTS);
+      }
+      const text = response.text();
+      return text;
+    } catch (error) {
+      console.error('Error generating task description:', error);
+    }
+    // return 'This action adds a new todo';
+  }
 
   async create(createTodoDto: CreateTodoDto): Promise<Todo> {
     try {
@@ -31,6 +59,84 @@ export class TodoService {
       }
     }
     // return 'This action adds a new todo';
+  }
+
+  async createSubtask(
+    taskId: string,
+    createSubtaskDto: CreateSubtaskDto,
+  ): Promise<Subtask> {
+    try {
+      const todo = await this.todoModel.findById(taskId).exec();
+
+      if (!todo) {
+        throw new NotFoundException('Todo Not Found');
+      }
+
+      const newSubtask = {
+        _id: new Types.ObjectId(),
+        title: createSubtaskDto.title,
+        isComplete: createSubtaskDto.isComplete,
+      };
+
+      todo.subtasks.push(newSubtask);
+
+      await todo.save();
+
+      return newSubtask;
+    } catch (error) {
+      if (error.name === 'CastError') {
+        throw new BadRequestException('Invalid ID');
+      }
+      throw error;
+    }
+    // return 'This action adds a new todo';
+  }
+
+  async findAllSubtask(taskId: string): Promise<Subtask[]> {
+    try {
+      const todo = await this.todoModel.findById(taskId).exec();
+
+      if (!todo) {
+        throw new NotFoundException('Todo Not Found');
+      }
+      const subtasks = todo.subtasks;
+
+      return subtasks;
+    } catch (error) {
+      if (error.name === 'CastError') {
+        throw new BadRequestException('Invalid ID');
+      }
+      throw error;
+    }
+    // return `This action returns a #${id} todo`;
+  }
+
+  async removeSubtask(taskId: string, subtaskId: string): Promise<Subtask> {
+    try {
+      const todo = await this.todoModel.findById(taskId).exec();
+
+      if (!todo) {
+        throw new NotFoundException('Todo Not Found');
+      }
+
+      const subtaskIndex = todo.subtasks.findIndex(
+        (subtask) => subtask._id.toString() === subtaskId,
+      );
+
+      if (subtaskIndex === -1) {
+        throw new NotFoundException('Subtask Not Found');
+      }
+      const deletedSubtask = todo.subtasks[subtaskIndex];
+      todo.subtasks.splice(subtaskIndex, 1); // Remove the subtask
+      await todo.save(); // Save the updated todo
+
+      return deletedSubtask;
+    } catch (error) {
+      if (error.name === 'CastError') {
+        throw new BadRequestException('Invalid ID');
+      }
+      throw error;
+    }
   }
 
   async findAll(
@@ -105,6 +211,7 @@ export class TodoService {
 
   async update(id: string, updateTodoDto: UpdateTodoDto): Promise<Todo> {
     try {
+      console.log('Due Date --> ' + updateTodoDto.dueDate);
       const update: Partial<UpdateTodoDto & { updatedAt: Date }> = {};
       if (updateTodoDto.taskTitle !== undefined) {
         update.taskTitle = updateTodoDto.taskTitle;

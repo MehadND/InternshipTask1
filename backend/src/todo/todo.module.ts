@@ -18,12 +18,6 @@ import { PassportModule } from '@nestjs/passport';
     ]),
   ],
   controllers: [TodoController],
-  providers: [
-    TodoService,
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: ThrottlerGuard,
-    // },
-  ],
+  providers: [TodoService],
 })
 export class TodoModule {}

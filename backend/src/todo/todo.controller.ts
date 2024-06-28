@@ -10,14 +10,20 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { TodoService } from './todo.service';
-import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { Todo } from './schemas/todo.schema';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
+import { Throttle } from '@nestjs/throttler';
+import { CreateTodoDto } from './dto/create-todo.dto';
+import { CreateSubtaskDto } from './dto/create-subtask.dto';
+// import { HuggingFaceService } from './huggingface.service';
 
 @Controller('todo')
 export class TodoController {
-  constructor(private readonly todoService: TodoService) {}
+  constructor(
+    private readonly todoService: TodoService,
+    // private readonly huggingFaceService: HuggingFaceService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -45,6 +51,28 @@ export class TodoController {
     return this.todoService.findOne(id);
   }
 
+  @Post(':taskId/subtasks')
+  @UseGuards(JwtAuthGuard)
+  createSubtask(
+    @Param('taskId') taskId: string,
+    @Body() createSubtaskDto: CreateSubtaskDto,
+  ) {
+    return this.todoService.createSubtask(taskId, createSubtaskDto);
+  }
+
+  @Get(':taskId/subtasks')
+  findAllSubtask(@Param('taskId') taskId: string) {
+    return this.todoService.findAllSubtask(taskId);
+  }
+
+  @Delete(':taskId/subtasks/:subtaskId')
+  removeSubtask(
+    @Param('taskId') taskId: string,
+    @Param('subtaskId') subtaskId: string,
+  ) {
+    return this.todoService.removeSubtask(taskId, subtaskId);
+  }
+
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   update(@Param('id') id: string, @Body() updateTodoDto: UpdateTodoDto) {
@@ -55,5 +83,12 @@ export class TodoController {
   @UseGuards(JwtAuthGuard)
   remove(@Param('id') id: string) {
     return this.todoService.remove(id);
+  }
+
+  @Post('generate/description')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  generateDescription(@Body('taskTitle') taskTitle: string) {
+    return this.todoService.generatedescription(taskTitle);
   }
 }

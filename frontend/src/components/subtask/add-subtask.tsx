@@ -12,7 +12,7 @@ import { Button } from "../ui/button";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { useState } from "react";
-import { ErrorNotify, SuccessNotify } from "../../lib/notify";
+import { ErrorNotify } from "../../lib/notify";
 import { useTheme } from "../theme-provider";
 import { useMediaQuery } from "@/lib/media-query";
 import {
@@ -24,22 +24,17 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "../ui/drawer";
-import {
-  addSubtask,
-  fetchAllSubtasks,
-} from "@/redux/features/subtasks/subtasksSlice";
+import { addSubtask } from "@/redux/features/subtasks/subtasksSlice";
+import { toast } from "react-toastify";
+import { CheckCircleIcon, LoaderCircleIcon, XCircleIcon } from "lucide-react";
 
 const AddSubtask = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { theme } = useTheme();
   const authToken = useSelector((state: RootState) => state.auth.token);
-  const paginationData = useSelector(
-    (state: RootState) => state.todos.paginationData
-  );
   const selectedTask = useSelector(
     (state: RootState) => state.selectedTask.task
   );
-  const { itemsPerPage } = useSelector((state: RootState) => state.pagination);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const [title, setTitle] = useState("");
@@ -58,7 +53,7 @@ const AddSubtask = () => {
       isComplete: false,
     };
 
-    const resultAction = await dispatch(
+    const resultAction = dispatch(
       addSubtask({
         _id: selectedTask?._id ?? "",
         subtaskData,
@@ -66,33 +61,55 @@ const AddSubtask = () => {
       })
     );
 
-    if (resultAction.payload === "Unauthorized") {
-      ErrorNotify("You are not authorized to perform this action!", theme);
-      return;
-    }
-
-    if (addSubtask.fulfilled.match(resultAction)) {
-      SuccessNotify("Subtask added successfully!", theme);
-
-      await dispatch(
-        fetchAllSubtasks({
-          todoId: selectedTask?._id ?? "",
-          token: authToken ?? "",
-        })
-      );
-
-      setTitle("");
-    } else {
-      ErrorNotify("Failed to add subtask.", theme);
-    }
+    toast.promise(
+      resultAction,
+      {
+        pending: {
+          render() {
+            return "Adding SubTask";
+          },
+          icon: <LoaderCircleIcon className="animate-spin" />,
+          className: "rotateY animated",
+          // toastId: "update_loading",
+        },
+        success: {
+          render({ data }) {
+            if (data.payload === "Unauthorized") {
+              setTitle("");
+              throw new Error("You are not authorized to perform this action!");
+            }
+            setTitle("");
+            return `Subtask added successfully!`;
+          },
+          // other options
+          icon: <CheckCircleIcon className="text-success" />,
+          // toastId: "update_success",
+          className: "rotateX animated",
+        },
+        error: {
+          render({ data }) {
+            setTitle("");
+            // When the promise reject, data will contains the error
+            return `${data}`;
+          },
+          icon: <XCircleIcon className="text-failure" />,
+          // toastId: "update_error",
+        },
+      },
+      {
+        theme: theme,
+      }
+    );
   };
+
+  // For Desktop
 
   if (isDesktop) {
     return (
       <Dialog open={formDialog} onOpenChange={setFormDialog}>
         <DialogTrigger asChild>
           <Button
-            disabled={selectedTask.isComplete}
+            disabled={selectedTask?.isComplete}
             variant="link"
             className="w-fit h-fit flex items-center justify-center ml-auto mr-auto"
             onClick={() => setFormDialog(true)}
@@ -137,11 +154,13 @@ const AddSubtask = () => {
     );
   }
 
+  // For Mobile
+
   return (
     <Drawer open={formDialog}>
       <DrawerTrigger asChild>
         <Button
-          disabled={selectedTask.isComplete}
+          disabled={selectedTask?.isComplete}
           variant="link"
           className="w-fit h-fit flex items-center justify-center ml-auto mr-auto"
           onClick={() => setFormDialog(true)}
@@ -180,7 +199,13 @@ const AddSubtask = () => {
               Add Subtask
             </Button>
             <DrawerClose>
-              <Button variant="outline" onClick={() => setTitle("")}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setTitle("");
+                  setFormDialog(false);
+                }}
+              >
                 Cancel
               </Button>
             </DrawerClose>

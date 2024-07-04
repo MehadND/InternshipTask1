@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { ListTodoIcon, SearchIcon } from "lucide-react";
 
 import {
@@ -12,22 +11,28 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/redux/store";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/redux/store";
 import { setSelectedTask } from "@/redux/features/selectedTask/selectedTaskSlice";
 import { setOpen } from "@/redux/features/sheetOpen/sheetOpenSlice";
 import { Todo } from "@/interfaces/todo";
 import { Button } from "../ui/button";
 import { useMediaQuery } from "@/lib/media-query";
 import { Drawer, DrawerContent, DrawerTrigger } from "../ui/drawer";
+import { useTranslation } from "react-i18next";
+import { useLazyGetAllTodosQuery } from "@/redux/services/todoApi";
+import { useEffect, useState } from "react";
 
 export function SearchBar() {
-  const [openSearch, setOpenSearch] = React.useState(false);
-  const todos = useSelector((state: RootState) => state.todos.todos);
+  const [openSearch, setOpenSearch] = useState(false);
+  const [searchTodos, setSearchTodos] = useState([]);
   const dispatch = useDispatch<AppDispatch>();
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const [fetchAllCompletedTodos, metadata] = useLazyGetAllTodosQuery({});
 
-  React.useEffect(() => {
+  useEffect(() => {
+    fetchAllCompletedTodos({});
+    fetchAllTodosForSearch();
     const down = (e: KeyboardEvent) => {
       if (e.key === "j" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -39,46 +44,68 @@ export function SearchBar() {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
+  const fetchAllTodosForSearch = async () => {
+    try {
+      setSearchTodos(metadata?.data?.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const handleEditTask = async (task: Todo) => {
     setOpenSearch(false);
     await dispatch(setSelectedTask(task));
     await dispatch(setOpen(true));
   };
 
+  // For Desktop
+
   if (isDesktop) {
     return (
       <>
-        {/* <Input
-        placeholder="Search Task..."
-        onClick={() => setOpenSearch(true)}
-        className="w-32"
-      /> */}
-        <Button variant="ghost" size="icon" onClick={() => setOpenSearch(true)}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            setOpenSearch(true);
+            fetchAllTodosForSearch();
+          }}
+        >
           <SearchIcon />
         </Button>
         <CommandDialog open={openSearch} onOpenChange={setOpenSearch}>
-          <TodoList todos={todos} handleEditTask={handleEditTask} />
+          <TodoList todos={searchTodos} handleEditTask={handleEditTask} />
         </CommandDialog>
       </>
     );
   }
 
+  // For Mobile
+
   return (
     <Drawer open={openSearch} onOpenChange={setOpenSearch}>
       <DrawerTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            setOpenSearch(true);
+            fetchAllTodosForSearch();
+          }}
+        >
           <SearchIcon />
         </Button>
       </DrawerTrigger>
       <DrawerContent className="h-3/4">
         <div className="mt-4 border-t">
-          <TodoList todos={todos} handleEditTask={handleEditTask} />
+          <TodoList todos={searchTodos} handleEditTask={handleEditTask} />
         </div>
       </DrawerContent>
     </Drawer>
   );
 }
 
+// function to render todo list for search
 function TodoList({
   todos,
   handleEditTask,
@@ -86,9 +113,11 @@ function TodoList({
   todos: Todo[];
   handleEditTask: (todo: Todo) => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <Command>
-      <CommandInput placeholder="Type something to search..." />
+      <CommandInput placeholder={t("searchBar.searchPlaceholder")} />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup>
@@ -97,11 +126,19 @@ function TodoList({
               return (
                 <CommandItem key={index} className="w-full">
                   <div
-                    className="flex items-center w-full"
+                    className="flex items-center w-full gap-2 hover:cursor-pointer"
                     onClick={() => handleEditTask(todo)}
                   >
                     <ListTodoIcon className="mr-2 h-4 w-4" />
-                    <span>{todo.taskTitle}</span>
+                    <span
+                      className={`${
+                        todo?.isComplete === true
+                          ? "line-clamp-1 line-through opacity-50"
+                          : ""
+                      }`}
+                    >
+                      {todo.taskTitle}
+                    </span>
                   </div>
                 </CommandItem>
               );

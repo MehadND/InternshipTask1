@@ -47,7 +47,20 @@ const Login = () => {
     const resultAction = await dispatch(
       loginUser({ username: username, password: password })
     );
-
+    if (resultAction.payload.message === "Invalid Username") {
+      setErrors({
+        username: "Invalid Username",
+        password: "",
+      });
+      return;
+    }
+    if (resultAction.payload.message === "Invalid Password") {
+      setErrors({
+        username: "",
+        password: "Invalid Password",
+      });
+      return;
+    }
     if (loginUser.fulfilled.match(resultAction)) {
       window.location.href = "/";
     }

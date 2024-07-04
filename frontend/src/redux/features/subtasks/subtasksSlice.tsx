@@ -87,7 +87,7 @@ export const addSubtask = createAsyncThunk(
       }
 
       const data = await response.json();
-      // await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       return data;
     } catch (error) {
       return rejectWithValue(error);
@@ -135,7 +135,11 @@ export const deleteSubtask = createAsyncThunk(
 export const subtasksSlice = createSlice({
   name: "subtasks",
   initialState,
-  reducers: {},
+  reducers: {
+    setSubtasks: (state, action) => {
+      state.subtasks = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder.addCase(fetchAllSubtasks.pending, (state) => {
       state.loading = true;
@@ -180,5 +184,6 @@ export const subtasksSlice = createSlice({
     });
   },
 });
+export const { setSubtasks } = subtasksSlice.actions;
 
 export default subtasksSlice.reducer;

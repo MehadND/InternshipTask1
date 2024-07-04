@@ -15,7 +15,12 @@ import { setCurrentPage } from "@/redux/features/pagination/paginationSlice";
 import { ErrorNotify } from "../../lib/notify";
 import { useTheme } from "../theme-provider";
 import { useTranslation } from "react-i18next";
-import { Switch } from "../ui/switch";
+import { Skeleton } from "../ui/skeleton";
+import { ChevronsLeft } from "lucide-react";
+import { useState } from "react";
+import { useLazyGetAllTodosQuery } from "@/redux/services/todoApi";
+import { Button } from "../ui/button";
+import { getDueDateStatus } from "@/lib/due-status";
 
 const MobileDisplay = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -45,9 +50,7 @@ const MobileDisplay = () => {
 
   const { theme } = useTheme();
 
-  const fetchCompletedTasks = async () => {
-    await dispatch(fetchCompletedTodos());
-  };
+  const [fetchAllTodos] = useLazyGetAllTodosQuery({});
 
   const updateTaskIsComplete = async (id, isComplete) => {
     const response = await fetch(`http://localhost:5001/api/todo/${id}`, {
@@ -77,72 +80,113 @@ const MobileDisplay = () => {
 
     dispatch(fetchTodos({ itemsPerPage, page: newCurrentPage }));
     dispatch(fetchCompletedTodos());
+    fetchAllTodos({});
     dispatch(setCurrentPage(newCurrentPage));
   };
 
   const { t } = useTranslation();
+  const loading = useSelector((state: RootState) => state.todos.loading);
+  const [first, setfirst] = useState(false);
+
   return (
     <>
       <div className="flex items-center w-full justify-between space-x-2 p-4">
-        <Label htmlFor="incomplete"> {t("tabs.incompleteTasks")}</Label>
-        <Switch
-          id="incomplete"
-          checked={activeTab != "incomplete"}
-          onCheckedChange={(e) => {
-            if (e === false) {
+        <Label
+          htmlFor="incomplete"
+          className={`transition-all duration-500 underline underline-offset-8 decoration-transparent ${
+            first === false ? "decoration-primary" : "decoration-transparent"
+          }`}
+        >
+          {" "}
+          {t("tabs.incompleteTasks")}
+        </Label>
+        <Button
+          variant={"ghost"}
+          size={"icon"}
+          disabled={loading}
+          onClick={() => {
+            setfirst(!first);
+            if (first === true) {
               dispatch(setActiveTab("incomplete"));
             } else {
               dispatch(setActiveTab("complete"));
-              fetchCompletedTasks();
+              // fetchCompletedTasks();
             }
           }}
-        />
-        <Label htmlFor="incomplete"> {t("tabs.completedTasks")}</Label>
+        >
+          <ChevronsLeft
+            className={`transition-all duration-500 ${
+              first === false ? "-rotate-30" : "rotate-180"
+            }`}
+          />
+        </Button>
+        <Label
+          htmlFor="incomplete"
+          className={`transition-all duration-500 underline underline-offset-8 decoration-transparent ${
+            first === false ? "decoration-transparent" : "decoration-primary"
+          }`}
+        >
+          {" "}
+          {t("tabs.completedTasks")} ({completedTodos.length})
+        </Label>
       </div>
       {activeTab === "incomplete" ? (
         <ScrollArea className="h-80 flex flex-col gap-4 border rounded-2xl m-4">
           <div>
-            {todos &&
-              todos.map((todo, index) => (
-                <div
-                  key={index}
-                  className=" flex items-center transition-all duration-300"
-                >
-                  <div
-                    tabIndex={0}
-                    className={`flex items-center rounded-3xl gap-4 px-4 py-4 w-full hover:bg-secondary ${
-                      todo._id === selectedTask?._id && open === true
-                        ? " bg-secondary"
-                        : " bg-transparent"
-                    }`}
-                    onClick={() => handleEditTask(todo)}
-                  >
-                    <span
-                      className="flex items-center"
-                      onClick={(e) => e.stopPropagation()}
+            {loading ? (
+              <>
+                {[1, 2, 3, 4].map((_, index) => {
+                  return (
+                    <div
+                      key={index}
+                      className="m-4 flex items-center transition-all duration-300"
                     >
-                      <Checkbox
-                        checked={todo?.isComplete}
-                        onCheckedChange={(e) => {
-                          const checked = e.target ? e.target.checked : e;
-                          updateTaskIsComplete(todo._id, checked);
-                        }}
-                        className=""
-                      />
-                    </span>
-                    <div className="flex items-center w-full">
-                      <p className="text-sm">{todo?.taskTitle}</p>
+                      <Skeleton className="h-14 flex items-center rounded-3xl gap-4 px-4 py-4 w-full hover:bg-secondary" />
                     </div>
-                    {/* <div className="border-l border-ring pl-2 ">
-                      <EditIcon
+                  );
+                })}
+              </>
+            ) : (
+              <>
+                {todos &&
+                  todos.map((todo, index) => (
+                    <div
+                      key={index}
+                      className="m-4 flex items-center transition-all duration-300"
+                    >
+                      <div
                         tabIndex={0}
-                        className="w-5 transition-all duration-300 hover:text-muted-foreground hover:cursor-pointer"
+                        className={`flex items-center rounded-3xl gap-4 px-4 py-4 w-full hover:bg-secondary ${
+                          todo._id === selectedTask?._id && open === true
+                            ? " bg-secondary"
+                            : " bg-transparent"
+                        }`}
                         onClick={() => handleEditTask(todo)}
-                      />
-                    </div> */}
-                  </div>
-                </div>
-              ))}
+                      >
+                        <span
+                          className="flex items-center"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Checkbox
+                            checked={todo?.isComplete}
+                            onCheckedChange={(e) => {
+                              const checked = e.target ? e.target.checked : e;
+                              updateTaskIsComplete(todo._id, checked);
+                            }}
+                            className=""
+                          />
+                        </span>
+                        <div className="flex items-center justify-between w-full">
+                          <p className="text-sm">{todo?.taskTitle}</p>
+                          <div className="flex text-sm items-center line-clamp-1 border-l-2 pl-2 ">
+                            {getDueDateStatus(todo?.dueDate)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </>
+            )}
           </div>
         </ScrollArea>
       ) : (
@@ -161,7 +205,7 @@ const MobileDisplay = () => {
                 .map((todo, index) => (
                   <div
                     key={index}
-                    className=" flex items-center transition-all duration-300"
+                    className="m-4 flex items-center transition-all duration-300"
                   >
                     <div
                       tabIndex={0}
@@ -186,13 +230,6 @@ const MobileDisplay = () => {
                           {todo?.taskTitle}
                         </p>
                       </div>
-                      {/* <div className="border-l border-ring pl-2 ">
-                        <EditIcon
-                          tabIndex={0}
-                          className="w-5 transition-all duration-300 hover:text-muted-foreground hover:cursor-pointer"
-                          onClick={() => handleEditTask(todo)}
-                        />
-                      </div> */}
                     </div>
                   </div>
                 ))}

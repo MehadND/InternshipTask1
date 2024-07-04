@@ -30,6 +30,8 @@ const Navbar = () => {
     window.location.href = "/";
   };
 
+  // For Desktop
+
   if (isDesktop) {
     return (
       <div className="flex p-2">
@@ -96,6 +98,8 @@ const Navbar = () => {
     );
   }
 
+  // For Mobile
+
   return (
     <div className="flex flex-col p-2">
       <div className="flex w-full justify-between p-2">
@@ -123,7 +127,10 @@ const Navbar = () => {
                 >
                   <Avatar className="w-fit">
                     <AvatarImage />
-                    <AvatarFallback className="p-2">{username}</AvatarFallback>
+                    <AvatarFallback className="p-2">
+                      <UserIcon />
+                      {username}
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>

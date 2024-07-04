@@ -22,5 +22,8 @@
         "taskDetail": "Détail de la tâche",
         "statusComplete": "terminées",
         "statusIncomplete": "incomplètes"
+    },
+    "searchBar": {
+        "searchPlaceholder": "Tapez quelque chose à rechercher"
     }
 }

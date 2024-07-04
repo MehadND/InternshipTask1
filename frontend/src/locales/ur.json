@@ -21,5 +21,8 @@
         "taskDetail": "تفصیل",
         "statusComplete": "مکمل",
         "statusIncomplete": "نامکمل"
+    },
+    "searchBar": {
+        "searchPlaceholder": "کچھ ٹائپ کریں۔"
     }
 }

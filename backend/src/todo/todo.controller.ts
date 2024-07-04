@@ -16,14 +16,13 @@ import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { Throttle } from '@nestjs/throttler';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
-// import { HuggingFaceService } from './huggingface.service';
+import { SubtaskDto } from './dto/subtask.dto';
 
 @Controller('todo')
 export class TodoController {
-  constructor(
-    private readonly todoService: TodoService,
-    // private readonly huggingFaceService: HuggingFaceService,
-  ) {}
+  constructor(private readonly todoService: TodoService) {}
+
+  // CRUD routes for todo
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -37,7 +36,7 @@ export class TodoController {
     @Query('page') page: number = 1,
     @Query('sort') sort: string = 'createdAt',
     @Query('order') order: string = 'desc',
-  ): Promise<{ data: Todo[]; pagination: any }> {
+  ): Promise<{ data: Todo[]; pagination: SubtaskDto }> {
     return this.todoService.findAll(limit, page, sort, order);
   }
 
@@ -50,6 +49,20 @@ export class TodoController {
   findOne(@Param('id') id: string) {
     return this.todoService.findOne(id);
   }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  update(@Param('id') id: string, @Body() updateTodoDto: UpdateTodoDto) {
+    return this.todoService.update(id, updateTodoDto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  remove(@Param('id') id: string) {
+    return this.todoService.remove(id);
+  }
+
+  // CRUD routes for subtasks functionality
 
   @Post(':taskId/subtasks')
   @UseGuards(JwtAuthGuard)
@@ -66,6 +79,7 @@ export class TodoController {
   }
 
   @Delete(':taskId/subtasks/:subtaskId')
+  @UseGuards(JwtAuthGuard)
   removeSubtask(
     @Param('taskId') taskId: string,
     @Param('subtaskId') subtaskId: string,
@@ -73,22 +87,19 @@ export class TodoController {
     return this.todoService.removeSubtask(taskId, subtaskId);
   }
 
-  @Patch(':id')
-  @UseGuards(JwtAuthGuard)
-  update(@Param('id') id: string, @Body() updateTodoDto: UpdateTodoDto) {
-    return this.todoService.update(id, updateTodoDto);
-  }
-
-  @Delete(':id')
-  @UseGuards(JwtAuthGuard)
-  remove(@Param('id') id: string) {
-    return this.todoService.remove(id);
-  }
+  // route for generating task description using AI
 
   @Post('generate/description')
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   generateDescription(@Body('taskTitle') taskTitle: string) {
     return this.todoService.generatedescription(taskTitle);
+  }
+
+  // route for search functionality
+
+  @Get('search/all')
+  findAllForSearch(): Promise<{ data: Todo[] }> {
+    return this.todoService.findAllForSearch();
   }
 }

@@ -4,20 +4,19 @@ import "./index.css";
 import { ThemeProvider } from "./components/theme-provider.tsx";
 import { Provider } from "react-redux";
 import { store } from "./redux/store.tsx";
-import { Bounce, ToastContainer } from "react-toastify";
+import { Flip, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./i18n.js";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
     <Provider store={store}>
-      {/* <PersistGate loading={null} persistor={persistor}> */}
       <App />
       <ToastContainer
-        position="top-right"
+        position="top-center"
         autoClose={2000}
         limit={5}
-        hideProgressBar={false}
+        hideProgressBar={true}
         newestOnTop={false}
         closeOnClick={true}
         rtl={false}
@@ -25,10 +24,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         pauseOnHover={false}
         draggable={false}
         // stacked={true}
-        transition={Bounce}
+        transition={Flip}
       />
-
-      {/* </PersistGate> */}
     </Provider>
   </ThemeProvider>
 );

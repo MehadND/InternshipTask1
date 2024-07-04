@@ -5,9 +5,12 @@ import { addTodo, fetchTodos } from "@/redux/features/todo/todoSlice";
 import { Input } from "../ui/input";
 import { setCurrentPage } from "@/redux/features/pagination/paginationSlice";
 import { Button } from "../ui/button";
-import { ErrorNotify, SuccessNotify } from "../../lib/notify";
+import { ErrorNotify } from "../../lib/notify";
 import { useTheme } from "../theme-provider";
 import { useTranslation } from "react-i18next";
+import { useLazyGetAllTodosQuery } from "@/redux/services/todoApi";
+import { toast } from "react-toastify";
+import { CheckCircleIcon, LoaderCircleIcon, XCircleIcon } from "lucide-react";
 
 const AddTodo: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -20,6 +23,7 @@ const AddTodo: React.FC = () => {
   const [taskTitle, setTaskTitle] = useState("");
 
   const { theme } = useTheme();
+  const [fetchAllTodos] = useLazyGetAllTodosQuery({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,43 +39,67 @@ const AddTodo: React.FC = () => {
       isComplete: false,
     };
 
-    const resultAction = await dispatch(
+    const resultAction = dispatch(
       addTodo({ todoData, token: authToken ?? "" })
     );
 
-    if (resultAction.payload === "Unauthorized") {
-      ErrorNotify("You are not authorized to perform this action!", theme);
-      return;
-    }
+    toast.promise(
+      resultAction,
+      {
+        pending: {
+          render() {
+            return "Adding Task";
+          },
+          icon: <LoaderCircleIcon className="animate-spin" />,
+        },
+        success: {
+          render({ data }) {
+            if (data.payload === "Unauthorized") {
+              throw new Error("You are not authorized to perform this action!");
+            }
+            const newTotalItems = paginationData.totalItems + 1;
+            const newTotalPages = Math.ceil(newTotalItems / itemsPerPage);
 
-    if (addTodo.fulfilled.match(resultAction)) {
-      SuccessNotify("Todo added successfully!", theme);
+            dispatch(fetchTodos({ itemsPerPage, page: newTotalPages }));
+            dispatch(setCurrentPage(newTotalPages));
+            fetchAllTodos({});
 
-      const newTotalItems = paginationData.totalItems + 1;
-      const newTotalPages = Math.ceil(newTotalItems / itemsPerPage);
-
-      dispatch(fetchTodos({ itemsPerPage, page: newTotalPages }));
-      dispatch(setCurrentPage(newTotalPages));
-
-      setTaskTitle("");
-    } else {
-      ErrorNotify("Failed to add todo.", theme);
-    }
+            setTaskTitle("");
+            return `Task (${data.payload.taskTitle}) added successfully`;
+          },
+          // other options
+          icon: <CheckCircleIcon className="text-success" />,
+        },
+        error: {
+          render({ data }) {
+            // When the promise reject, data will contains the error
+            return `${data}`;
+          },
+          icon: <XCircleIcon className="text-failure" />,
+        },
+      },
+      {
+        theme: theme,
+      }
+    );
   };
 
   const { t } = useTranslation();
 
+  const loading = useSelector((state: RootState) => state.todos.loading);
+
   return (
     <form className="" onSubmit={handleSubmit}>
-      <div className="p-4 sm:fixed sm:bottom-4 sm:max-w-screen-md flex items-center gap-4 w-full">
+      <div className="p-4 fixed left-0 right-0 sm:ml-auto sm:mr-auto bottom-0 sm:bottom-4 sm:max-w-screen-md flex items-center gap-4 w-full">
         <Input
+          readOnly={loading}
           type="text"
           id="taskTitle"
           placeholder={t("addTodo.placeholder")}
           value={taskTitle}
           onChange={(e) => setTaskTitle(e.target.value)}
         />
-        <Button variant="outline" type="submit">
+        <Button variant="outline" type="submit" disabled={loading}>
           {t("addTodo.addButton")}
         </Button>
       </div>

@@ -7,6 +7,6 @@ export interface Todo {
   isComplete?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  dueDate?: Date;
+  dueDate?: Date | null;
   subtasks?: Subtask[];
 }

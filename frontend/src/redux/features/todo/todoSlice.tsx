@@ -33,13 +33,17 @@ const initialState: TodosState = {
 export const fetchTodos = createAsyncThunk(
   "todos/fetchTodos",
   async ({ itemsPerPage, page }: { itemsPerPage: number; page: number }) => {
-    const response = await fetch(
-      `http://localhost:5001/api/todo?limit=${itemsPerPage}&page=${page}`
-    );
-    const data = await response.json();
-    // delay for 2 seconds
-    // await new Promise((resolve) => setTimeout(resolve, 500));
-    return data;
+    try {
+      const response = await fetch(
+        `http://localhost:5001/api/todo?limit=${itemsPerPage}&page=${page}`
+      );
+      const data = await response.json();
+      // delay for 2 seconds
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return data;
+    } catch (error) {
+      console.log(error);
+    }
   }
 );
 
@@ -48,6 +52,7 @@ export const fetchCompletedTodos = createAsyncThunk(
   async () => {
     const response = await fetch(`http://localhost:5001/api/todo/completed`);
     const data = await response.json();
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     return data.data;
   }
 );
@@ -81,6 +86,8 @@ export const addTodo = createAsyncThunk(
       }
 
       const data = await response.json();
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       return data;
     } catch (error) {
       return rejectWithValue(error);
@@ -113,6 +120,8 @@ export const deleteTodo = createAsyncThunk(
         }
       );
       const data = await deletedTodo.json();
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       return data._id;
     } catch (error) {
       return rejectWithValue(error);
@@ -168,6 +177,8 @@ export const updateTodo = createAsyncThunk(
       }
 
       const data = await response.json();
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       return data;
     } catch (error) {
       return rejectWithValue(error);
@@ -218,7 +229,7 @@ export const todosSlice = createSlice({
     });
     builder.addCase(addTodo.fulfilled, (state, action) => {
       state.loading = false;
-      state.todos.push(action.payload); // Assuming the new todo is in action.payload.data
+      state.todos.push(action.payload);
       state.error = null;
     });
     builder.addCase(addTodo.rejected, (state, action) => {

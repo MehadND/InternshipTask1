@@ -1,9 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { ApiProperty } from '@nestjs/swagger';
 import { Document } from 'mongoose';
 import { Subtask, SubtaskSchema } from './subtask.schema';
 
 @Schema()
 export class Todo extends Document {
+  @ApiProperty({
+    example: 'Task Title',
+    required: true,
+  })
   @Prop({ required: true })
   taskTitle: string;
 

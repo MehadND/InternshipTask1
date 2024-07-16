@@ -1,0 +1,15 @@
+{
+  "name": "root",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "backend": "cd backend && npm run start:dev",
+    "frontend": "cd frontend && npm run dev",
+    "nextjs-frontend": "cd nextjs-frontend && npm run dev",
+    "concurrently": "concurrently \"npm run backend\" \"npm run nextjs-frontend\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
